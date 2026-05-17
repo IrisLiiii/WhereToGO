@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Story from './pages/Story';
 import End from './pages/End';
 import CityDetail from './pages/CityDetail';
-
 import EnergyStation from './pages/EnergyStation';
 import { EnergyProvider } from './context/EnergyContext';
+import { useAuth } from './context/AuthContext';
 import StarshipWidget from './components/game/StarshipWidget';
 import Navbar from './components/Navbar';
-
+import LoginModal from './components/LoginModal';
 import KeywordsParticle from './components/KeywordsParticle';
 import PinkAnimationHome from './components/PinkAnimationHome';
 import FirstsTimeline from './components/firsts/FirstsTimeline';
@@ -16,7 +16,189 @@ import LettersModule from './components/letters/LettersModule';
 import LettersIcon from './components/letters/LettersIcon';
 import MusicPlayer from './components/MusicPlayer';
 
-export default function App() {
+function LoadingScreen() {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'radial-gradient(circle at top, #1f2a44 0%, #0a0f1a 55%, #05070d 100%)',
+        color: '#fff',
+      }}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>WhereToGO</div>
+        <div style={{ opacity: 0.7, letterSpacing: '0.08em' }}>loading your shared memory space...</div>
+      </div>
+    </div>
+  );
+}
+
+function PublicLanding({ onOpenLogin }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        backgroundImage: `linear-gradient(rgba(8, 12, 20, 0.45), rgba(8, 12, 20, 0.7)), url(${import.meta.env.BASE_URL}images/Background.jpg)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        color: '#fff',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.16) 0, rgba(255,255,255,0) 30%), radial-gradient(circle at 80% 30%, rgba(246,190,200,0.16) 0, rgba(246,190,200,0) 28%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '680px',
+            textAlign: 'center',
+            padding: '40px 32px',
+            borderRadius: '28px',
+            background: 'rgba(8, 12, 20, 0.35)',
+            border: '1px solid rgba(255, 255, 255, 0.14)',
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 20px 80px rgba(0, 0, 0, 0.25)',
+          }}
+        >
+          <div style={{ fontSize: 'clamp(2.6rem, 8vw, 5rem)', fontWeight: 700, letterSpacing: '0.08em' }}>
+            WhereToGO
+          </div>
+          <p
+            style={{
+              margin: '18px auto 0',
+              maxWidth: '540px',
+              lineHeight: 1.8,
+              fontSize: '1rem',
+              color: 'rgba(255, 255, 255, 0.82)',
+            }}
+          >
+            where our travels become our shared memories. every picture, every place, every heartbeat
+            along the way waits here, quietly asking: to where next?
+          </p>
+          <div
+            style={{
+              marginTop: '28px',
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            <button
+              type="button"
+              onClick={onOpenLogin}
+              style={{
+                border: 'none',
+                borderRadius: '999px',
+                padding: '14px 28px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                color: '#1a1320',
+                background: 'linear-gradient(135deg, #f6bec8 0%, #fad0c4 100%)',
+                boxShadow: '0 10px 30px rgba(246, 190, 200, 0.28)',
+              }}
+            >
+              登录进入
+            </button>
+            <div
+              style={{
+                padding: '14px 20px',
+                borderRadius: '999px',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                fontSize: '0.95rem',
+                color: 'rgba(255,255,255,0.78)',
+              }}
+            >
+              仅限被邀请成员访问完整内容
+            </div>
+          </div>
+        </div>
+      </div>
+      <MusicPlayer />
+    </div>
+  );
+}
+
+function AccountBadge() {
+  const { user, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    const { error } = await signOut();
+    if (error) {
+      console.error('Failed to sign out:', error);
+    }
+    setSigningOut(false);
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: '16px',
+        left: '16px',
+        zIndex: 100002,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '10px 14px',
+        borderRadius: '999px',
+        background: 'rgba(8, 12, 20, 0.48)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        backdropFilter: 'blur(12px)',
+        color: '#fff',
+      }}
+    >
+      <div style={{ maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {user?.email}
+      </div>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        disabled={signingOut}
+        style={{
+          border: 'none',
+          borderRadius: '999px',
+          padding: '8px 12px',
+          cursor: signingOut ? 'not-allowed' : 'pointer',
+          background: 'rgba(255,255,255,0.14)',
+          color: '#fff',
+        }}
+      >
+        {signingOut ? '退出中...' : '退出'}
+      </button>
+    </div>
+  );
+}
+
+function AuthenticatedApp() {
   const [page, setPage] = useState('home');
   const [selectedCity, setSelectedCity] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -93,6 +275,7 @@ export default function App() {
   return (
     <EnergyProvider>
         <div style={{ width: '100%', height: '100%', margin: 0, padding: 0 }}>
+          <AccountBadge />
           {/* Mobile Notice Modal */}
           {showMobileNotice && isMobile && (
             <div style={{
@@ -251,4 +434,24 @@ export default function App() {
         </div>
       </EnergyProvider>
   );
+}
+
+export default function App() {
+  const { loading, user } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return (
+      <>
+        <PublicLanding onOpenLogin={() => setShowLoginModal(true)} />
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      </>
+    );
+  }
+
+  return <AuthenticatedApp />;
 }

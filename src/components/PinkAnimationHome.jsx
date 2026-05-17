@@ -4,6 +4,7 @@ import CesiumGlobe from './CesiumGlobe';
 import { supabase } from '../lib/supabaseClient';
 import AdminTokenManager from './admin/AdminTokenManager';
 
+const enableLegacyAdmin = import.meta.env.VITE_ENABLE_LEGACY_ADMIN === 'true';
 
 // Carousel sequence: 0(15s) -> 1(15s) -> 2(40s) -> 1(15s) -> 0(15s) -> repeat
 const CAROUSEL_SEQUENCE = [
@@ -40,6 +41,7 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
     const easterEggTimer = useRef(null);
 
     const handleTitleClick = useCallback(() => {
+        if (!enableLegacyAdmin) return;
         easterEggClickCount.current += 1;
         console.log(`Title clicked ${easterEggClickCount.current}/5`);
         if (easterEggTimer.current) clearTimeout(easterEggTimer.current);
@@ -437,11 +439,13 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
             </AnimatePresence>
 
             {/* Admin Panel (Easter Egg) */}
-            <AdminTokenManager
-                isOpen={showAdmin}
-                onClose={() => setShowAdmin(false)}
-                onCityCreated={refreshCities}
-            />
+            {enableLegacyAdmin && (
+                <AdminTokenManager
+                    isOpen={showAdmin}
+                    onClose={() => setShowAdmin(false)}
+                    onCityCreated={refreshCities}
+                />
+            )}
         </div>
     );
 }

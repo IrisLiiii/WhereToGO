@@ -1,33 +1,39 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginModal({ isOpen, onClose, onLogin }) {
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // 简单的验证逻辑
-    setTimeout(() => {
-      if (password === '250701') {
-        onLogin();
-        onClose();
-        setPassword('');
-      } else {
-        setError('密码错误，请重新输入');
-      }
+    const { error: signInError } = await signIn(email, password);
+
+    if (signInError) {
+      setError(signInError.message || '登录失败，请检查邮箱和密码');
       setIsLoading(false);
-    }, 800); // 模拟网络延迟
+      return;
+    }
+
+    onLogin?.();
+    setEmail('');
+    setPassword('');
+    setIsLoading(false);
+    onClose?.();
   };
 
   const handleClose = () => {
+    setEmail('');
     setPassword('');
     setError('');
-    onClose();
+    onClose?.();
   };
 
   return (
@@ -130,7 +136,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
                   color: 'rgba(61, 59, 79, 0.8)',
                   margin: 0
                 }}>
-                  请输入密码继续探索
+                  请输入受邀邮箱和密码继续探索
                 </p>
               </motion.div>
 
@@ -141,6 +147,46 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
               >
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    color: '#3D3B4F'
+                  }}>
+                    邮箱
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      fontSize: '1rem',
+                      color: '#3D3B4F',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(255, 255, 255, 0.2)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+
                 {/* 密码输入框 */}
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{
@@ -177,6 +223,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
                       e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
                       e.target.style.boxShadow = 'none';
                     }}
+                    autoComplete="current-password"
                     required
                   />
                 </div>
@@ -208,7 +255,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
                 {/* 登录按钮 */}
                 <motion.button
                   type="submit"
-                  disabled={isLoading || !password}
+                  disabled={isLoading || !email || !password}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   style={{
@@ -216,13 +263,13 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
                     padding: '14px',
                     borderRadius: '10px',
                     border: 'none',
-                    background: isLoading || !password 
+                    background: isLoading || !email || !password 
                       ? 'rgba(61, 59, 79, 0.5)' 
                       : 'linear-gradient(135deg, #3D3B4F 0%, #5D5A6F 100%)',
                     color: 'white',
                     fontSize: '1.1rem',
                     fontWeight: 'bold',
-                    cursor: isLoading || !password ? 'not-allowed' : 'pointer',
+                    cursor: isLoading || !email || !password ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
                     display: 'flex',
                     alignItems: 'center',
@@ -263,7 +310,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
                     lineHeight: '1.4'
                   }}
                 >
-                  入住小家
+                  仅限被邀请的两位成员登录
                 </motion.div>
               </motion.form>
             </motion.div>
