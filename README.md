@@ -1,10 +1,10 @@
-# ToWhere Online V1.0
+# WhereToGO
 
 > A private universe for travel memories, first moments, letters, and daily energy.
 
-![ToWhere Online V1.0](./docs/images/online-cover.jpg)
+![WhereToGO](./docs/images/online-cover.jpg)
 
-ToWhere Online is an interactive memory archive built with React. It turns places, photos, words, and small daily records into a visual space that can be opened, explored, and revisited.
+WhereToGO is an interactive memory archive built with React. It turns places, photos, words, and small daily records into a visual space that can be opened, explored, and revisited.
 
 It started as a personal gift, so the product shape is intentionally intimate: a starry entry, a living globe, city memories, FIRSTS timeline, letters, music, and an Energy Station for recording emotional gravity over time.
 
@@ -37,7 +37,7 @@ It started as a personal gift, so the product shape is intentionally intimate: a
 
 ## What It Does
 
-### ToWhere Globe
+### WhereToGO Globe
 
 The main travel view places memories on a globe. Cities become points in space, and each place can lead into a dedicated detail page with photos and story fragments.
 
@@ -143,7 +143,7 @@ docs/images/           README preview images
 
 ## Data Sources
 
-ToWhere Online uses a few storage layers:
+WhereToGO uses a few storage layers:
 
 - Supabase Database for city data, FIRSTS records, letters, and dynamic configuration
 - Supabase Storage for uploaded FIRSTS images
