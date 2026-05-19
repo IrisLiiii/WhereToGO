@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,11 +8,56 @@ function normalizeName(input) {
   return name.slice(0, 24);
 }
 
+const FONT_OPTIONS = [
+  {
+    key: 'system',
+    label: '默认（系统）',
+    fontFamily: "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif",
+  },
+  {
+    key: 'notoSerif',
+    label: 'Noto Serif SC（衬线）',
+    fontFamily: "'Noto Serif SC', 'PingFang SC', serif",
+  },
+  {
+    key: 'zcool',
+    label: 'ZCOOL XiaoWei（古风）',
+    fontFamily: "'ZCOOL XiaoWei', 'PingFang SC', serif",
+  },
+  {
+    key: 'mashan',
+    label: 'Ma Shan Zheng（手写）',
+    fontFamily: "'Ma Shan Zheng', 'PingFang SC', cursive",
+  },
+  {
+    key: 'rajdhani',
+    label: 'Rajdhani（科幻）',
+    fontFamily: "'Rajdhani', 'PingFang SC', sans-serif",
+  },
+  {
+    key: 'orbitron',
+    label: 'Orbitron（硬核科幻）',
+    fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+  },
+];
+
+function applyFontFamily(fontFamily) {
+  if (!fontFamily) return;
+  document.documentElement.style.setProperty('--app-font', fontFamily);
+  localStorage.setItem('wheretogo:fontFamily', fontFamily);
+}
+
 export default function AccountBadge({ placement = 'bottom-left' }) {
   const { user, profile, profileLoading, signOut, updateDisplayName } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
+  const [fontKey, setFontKey] = useState(() => {
+    const stored = localStorage.getItem('wheretogo:fontFamily');
+    if (!stored) return 'system';
+    const match = FONT_OPTIONS.find((o) => o.fontFamily === stored);
+    return match?.key || 'system';
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,15 +91,18 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
     return { ...base, bottom: '16px', left: '16px' };
   }, [placement]);
 
-  const openEdit = () => {
+  const openProfile = () => {
     setError('');
     setDraftName(profile?.display_name || '');
-    setIsEditing(true);
+    const stored = localStorage.getItem('wheretogo:fontFamily');
+    const match = stored ? FONT_OPTIONS.find((o) => o.fontFamily === stored) : null;
+    setFontKey(match?.key || 'system');
+    setIsOpen(true);
   };
 
-  const closeEdit = () => {
+  const closeProfile = () => {
     if (saving) return;
-    setIsEditing(false);
+    setIsOpen(false);
     setError('');
   };
 
@@ -75,7 +123,9 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
       return;
     }
 
-    setIsEditing(false);
+    const selected = FONT_OPTIONS.find((o) => o.key === fontKey);
+    applyFontFamily(selected?.fontFamily || FONT_OPTIONS[0].fontFamily);
+    setIsOpen(false);
   };
 
   const handleSignOut = async () => {
@@ -92,7 +142,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
       <div style={containerStyle}>
         <button
           type="button"
-          onClick={openEdit}
+          onClick={openProfile}
           style={{
             border: 'none',
             background: 'transparent',
@@ -107,7 +157,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
             fontWeight: 600,
             opacity: profileLoading ? 0.7 : 1,
           }}
-          title="点击修改昵称"
+          title="点击打开个人设置"
         >
           {displayName}
         </button>
@@ -131,7 +181,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
       </div>
 
       <AnimatePresence>
-        {isEditing && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -149,7 +199,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
               padding: '20px',
               boxSizing: 'border-box',
             }}
-            onClick={closeEdit}
+            onClick={closeProfile}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
@@ -169,10 +219,10 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>设置昵称</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>个人主页</div>
                 <button
                   type="button"
-                  onClick={closeEdit}
+                  onClick={closeProfile}
                   disabled={saving}
                   style={{
                     border: 'none',
@@ -187,27 +237,63 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
                 </button>
               </div>
 
-              <div style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '10px' }}>
-                将显示在页面角落和后续记录归属中
+              <div style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '14px', lineHeight: 1.7 }}>
+                昵称会显示在页面角落；字体会影响整个网页的显示风格
               </div>
 
-              <input
-                value={draftName}
-                onChange={(e) => setDraftName(e.target.value)}
-                placeholder="例如：小肴 / Iris / 宝宝"
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  background: 'rgba(255,255,255,0.06)',
-                  color: '#fff',
-                  outline: 'none',
-                  fontSize: '1rem',
-                }}
-                autoFocus
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', opacity: 0.75, marginBottom: '8px' }}>昵称</div>
+                  <input
+                    value={draftName}
+                    onChange={(e) => setDraftName(e.target.value)}
+                    placeholder="例如：小肴 / Iris / 宝宝"
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      background: 'rgba(255,255,255,0.06)',
+                      color: '#fff',
+                      outline: 'none',
+                      fontSize: '1rem',
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '0.85rem', opacity: 0.75, marginBottom: '8px' }}>字体</div>
+                  <select
+                    value={fontKey}
+                    onChange={(e) => {
+                      const nextKey = e.target.value;
+                      setFontKey(nextKey);
+                      const selected = FONT_OPTIONS.find((o) => o.key === nextKey);
+                      applyFontFamily(selected?.fontFamily || FONT_OPTIONS[0].fontFamily);
+                    }}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      background: 'rgba(255,255,255,0.06)',
+                      color: '#fff',
+                      outline: 'none',
+                      fontSize: '1rem',
+                      appearance: 'none',
+                    }}
+                  >
+                    {FONT_OPTIONS.map((o) => (
+                      <option key={o.key} value={o.key} style={{ color: '#000' }}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               <AnimatePresence>
                 {error && (
@@ -234,7 +320,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
               <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
                 <button
                   type="button"
-                  onClick={closeEdit}
+                  onClick={closeProfile}
                   disabled={saving}
                   style={{
                     flex: 1,
@@ -273,4 +359,3 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
     </>
   );
 }
-

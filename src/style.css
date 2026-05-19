@@ -1,6 +1,10 @@
 /* 导入 Google Fonts 中文字体 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
 
+:root {
+  --app-font: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+}
+
 html,
 body {
   margin: 0;
@@ -13,7 +17,7 @@ body {
 }
 
 body {
-  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  font-family: var(--app-font);
   background: #f0f4fa;
   color: #222;
 }
@@ -82,7 +86,7 @@ button:active {
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
-  font-family: 'PingFang SC', sans-serif;
+  font-family: var(--app-font);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
