@@ -9,7 +9,16 @@ create extension if not exists citext;
 
 -- ============================================
 -- 通用函数
+-- 成员资料
 -- ============================================
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email citext unique,
+  display_name text,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -56,16 +65,8 @@ as $$
 $$;
 
 -- ============================================
--- 成员资料
+-- 成员资料触发器
 -- ============================================
-
-create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email citext unique,
-  display_name text,
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
-);
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

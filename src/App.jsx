@@ -8,6 +8,7 @@ import { useAuth } from './context/AuthContext';
 import StarshipWidget from './components/game/StarshipWidget';
 import Navbar from './components/Navbar';
 import LoginModal from './components/LoginModal';
+import SetPasswordModal from './components/SetPasswordModal';
 import KeywordsParticle from './components/KeywordsParticle';
 import PinkAnimationHome from './components/PinkAnimationHome';
 import FirstsTimeline from './components/firsts/FirstsTimeline';
@@ -15,6 +16,23 @@ import HeroSection from './components/HeroSection';
 import LettersModule from './components/letters/LettersModule';
 import LettersIcon from './components/letters/LettersIcon';
 import MusicPlayer from './components/MusicPlayer';
+
+function parseHashParams() {
+  const raw = (window.location.hash || '').replace(/^#/, '');
+  if (!raw) return {};
+
+  return raw.split('&').reduce((acc, part) => {
+    const [k, v] = part.split('=');
+    if (!k) return acc;
+    acc[decodeURIComponent(k)] = decodeURIComponent(v || '');
+    return acc;
+  }, {});
+}
+
+function clearHash() {
+  const url = window.location.pathname + window.location.search;
+  window.history.replaceState(null, '', url);
+}
 
 function LoadingScreen() {
   return (
@@ -439,16 +457,55 @@ function AuthenticatedApp() {
 export default function App() {
   const { loading, user } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [authLink, setAuthLink] = useState(() => parseHashParams());
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (!user) {
+    const errorCode = authLink.error_code || authLink.error;
+    const shouldSetPassword =
+      (authLink.type === 'invite' || authLink.type === 'recovery') &&
+      !!authLink.access_token &&
+      !!authLink.refresh_token;
+
     return (
       <>
         <PublicLanding onOpenLogin={() => setShowLoginModal(true)} />
+        {errorCode === 'otp_expired' && (
+          <div
+            style={{
+              position: 'fixed',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              bottom: '18px',
+              zIndex: 100003,
+              background: 'rgba(8, 12, 20, 0.7)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              color: 'rgba(255,255,255,0.9)',
+              padding: '12px 16px',
+              borderRadius: '14px',
+              maxWidth: '92vw',
+              backdropFilter: 'blur(14px)',
+              boxShadow: '0 18px 60px rgba(0,0,0,0.3)',
+              lineHeight: 1.6,
+            }}
+          >
+            邮件链接已失效或已过期，请回到 Supabase 后台重新发送邀请邮件后再打开新链接。
+          </div>
+        )}
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+        <SetPasswordModal
+          isOpen={shouldSetPassword}
+          accessToken={authLink.access_token}
+          refreshToken={authLink.refresh_token}
+          mode={authLink.type}
+          onDone={() => {
+            clearHash();
+            setAuthLink({});
+          }}
+        />
       </>
     );
   }
