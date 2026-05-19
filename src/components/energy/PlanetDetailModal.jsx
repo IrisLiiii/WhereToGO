@@ -13,10 +13,10 @@ export default function PlanetDetailModal({ keyword, onClose }) {
 
     // Determine which user owns this keyword
     const USERS_LOCAL = {
-        JIANG: { id: 'Dd', keywords: ['运动', '探索'] },
-        ZHEN: { id: 'Peachfuzzz', keywords: ['-'] }
+        D: { id: 'Dd', keywords: ['运动', '探索'] },
+        T: { id: 'Peachfuzzz', keywords: ['-'] }
     };
-    const keywordOwner = USERS_LOCAL.JIANG.keywords.includes(keyword) ? 'Dd' : 'Peachfuzzz';
+    const keywordOwner = USERS_LOCAL.D.keywords.includes(keyword) ? 'Dd' : 'Peachfuzzz';
 
     // -- Data Processing for Chart --
     // We use the already computed gravityScores from context (which is for currentUser)

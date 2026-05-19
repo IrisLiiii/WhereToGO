@@ -6,13 +6,13 @@ import { format, subDays, isSameDay, parseISO, differenceInDays } from 'date-fns
 const EnergyContext = createContext();
 
 export const USERS = {
-    JIANG: {
-        id: 'jiang',
+    D: {
+        id: 'Dd',
         name: '我',
         keywords: ['专注', '求索', '真实']
     },
-    ZHEN: {
-        id: 'zhen',
+    T: {
+        id: 'Peachfuzzz',
         name: 'TA',
         keywords: ['思考', '减负', '在场', '投入']
     }
@@ -40,7 +40,7 @@ export const PLANET_METADATA = {
 };
 
 export function EnergyProvider({ children }) {
-    const [currentUser, setCurrentUser] = useState('jiang'); // 'jiang' or 'zhen'
+    const [currentUser, setCurrentUser] = useState(USERS.D.id);
     const [checkins, setCheckins] = useState([]);
     const [keywordTasks, setKeywordTasks] = useState([]); // Sub-tasks for keywords
     const [loading, setLoading] = useState(true);
@@ -188,9 +188,9 @@ export function EnergyProvider({ children }) {
     // -- Algorithm: Calculate Gravity Scores (For Current User UI) --
     const gravityScores = useMemo(() => {
         // Compute gravity for ALL keywords from both users so any planet modal works
-        const jiangScores = computeUserGravity(USERS.JIANG.id, USERS.JIANG.keywords, checkins);
-        const zhenScores = computeUserGravity(USERS.ZHEN.id, USERS.ZHEN.keywords, checkins);
-        return { ...jiangScores, ...zhenScores };
+        const dScores = computeUserGravity(USERS.D.id, USERS.D.keywords, checkins);
+        const tScores = computeUserGravity(USERS.T.id, USERS.T.keywords, checkins);
+        return { ...dScores, ...tScores };
     }, [checkins]);
 
     // -- Game: Spacecraft Logic (Hybrid Algorithm + Breakdown) --
@@ -216,12 +216,12 @@ export function EnergyProvider({ children }) {
         };
 
         // 2. Compute Gravity Context for BOTH users to have accurate historical scores
-        const jiangGravity = computeUserGravity(USERS.JIANG.id, USERS.JIANG.keywords, checkins);
-        const zhenGravity = computeUserGravity(USERS.ZHEN.id, USERS.ZHEN.keywords, checkins);
+        const dGravity = computeUserGravity(USERS.D.id, USERS.D.keywords, checkins);
+        const tGravity = computeUserGravity(USERS.T.id, USERS.T.keywords, checkins);
 
         const gravityMap = {
-            [USERS.JIANG.id]: jiangGravity,
-            [USERS.ZHEN.id]: zhenGravity
+            [USERS.D.id]: dGravity,
+            [USERS.T.id]: tGravity
         };
 
         // 3. Calculate Points & Breakdown
@@ -229,7 +229,7 @@ export function EnergyProvider({ children }) {
         const keywordPointsMap = {};
 
         // Initialize map with 0
-        [...USERS.JIANG.keywords, ...USERS.ZHEN.keywords].forEach(k => {
+        [...USERS.D.keywords, ...USERS.T.keywords].forEach(k => {
             keywordPointsMap[k] = 0;
         });
 
@@ -288,7 +288,7 @@ export function EnergyProvider({ children }) {
         <EnergyContext.Provider value={{
             currentUser,
             setCurrentUser,
-            userInfo: USERS[currentUser === 'jiang' ? 'JIANG' : 'ZHEN'],
+            userInfo: USERS[currentUser === USERS.D.id ? 'D' : 'T'],
             users: USERS,
             checkins,
             addCheckin,

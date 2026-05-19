@@ -409,13 +409,27 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
                                 borderRadius: '12px',
                                 overflow: 'hidden',
                                 boxShadow: '0 0 30px rgba(0,0,0,0.5)',
-                                background: 'transparent',
+                                background: 'rgba(255,255,255,0.03)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
-                                <video src={`${import.meta.env.BASE_URL}video/all.mp4`} autoPlay loop muted controls playsInline
-                                    style={{ width: '100%', height: '100%', display: 'block', outline: 'none', objectFit: 'cover' }} />
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        padding: '18px',
+                                        boxSizing: 'border-box',
+                                        color: 'rgba(255,255,255,0.75)',
+                                        textAlign: 'center',
+                                        lineHeight: 1.8
+                                    }}
+                                >
+                                    开发日志 · 仅文字记录
+                                </div>
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingLeft: '10px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
