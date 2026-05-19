@@ -7,6 +7,7 @@ import { EnergyProvider } from './context/EnergyContext';
 import { useAuth } from './context/AuthContext';
 import StarshipWidget from './components/game/StarshipWidget';
 import Navbar from './components/Navbar';
+import AccountBadge from './components/AccountBadge';
 import LoginModal from './components/LoginModal';
 import SetPasswordModal from './components/SetPasswordModal';
 import KeywordsParticle from './components/KeywordsParticle';
@@ -163,59 +164,6 @@ function PublicLanding({ onOpenLogin }) {
   );
 }
 
-function AccountBadge() {
-  const { user, signOut } = useAuth();
-  const [signingOut, setSigningOut] = useState(false);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    const { error } = await signOut();
-    if (error) {
-      console.error('Failed to sign out:', error);
-    }
-    setSigningOut(false);
-  };
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '16px',
-        left: '16px',
-        zIndex: 100002,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '10px 14px',
-        borderRadius: '999px',
-        background: 'rgba(8, 12, 20, 0.48)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        backdropFilter: 'blur(12px)',
-        color: '#fff',
-      }}
-    >
-      <div style={{ maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {user?.email}
-      </div>
-      <button
-        type="button"
-        onClick={handleSignOut}
-        disabled={signingOut}
-        style={{
-          border: 'none',
-          borderRadius: '999px',
-          padding: '8px 12px',
-          cursor: signingOut ? 'not-allowed' : 'pointer',
-          background: 'rgba(255,255,255,0.14)',
-          color: '#fff',
-        }}
-      >
-        {signingOut ? '退出中...' : '退出'}
-      </button>
-    </div>
-  );
-}
-
 function AuthenticatedApp() {
   const [page, setPage] = useState('home');
   const [selectedCity, setSelectedCity] = useState(null);
@@ -293,7 +241,7 @@ function AuthenticatedApp() {
   return (
     <EnergyProvider>
         <div style={{ width: '100%', height: '100%', margin: 0, padding: 0 }}>
-          <AccountBadge />
+          <AccountBadge placement="bottom-left" />
           {/* Mobile Notice Modal */}
           {showMobileNotice && isMobile && (
             <div style={{

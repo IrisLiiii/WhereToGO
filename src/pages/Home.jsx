@@ -4,7 +4,7 @@ import CesiumGlobe from '../components/CesiumGlobe';
 import LoginModal from '../components/LoginModal';
 
 export default function Home({ goTo, goToCity }) {
-  const title = '一路向哪？'.split('');
+  const title = 'WhereToGo？'.split('');
   const subtitle = 'To Where?'.split('');
   const [scrollY, setScrollY] = useState(0);
   const [waterfallImages, setWaterfallImages] = useState([]);
@@ -91,51 +91,9 @@ export default function Home({ goTo, goToCity }) {
   useEffect(() => {
     // 根据实际文件结构定义可用的图片
     const cityImages = {
-      '台北': [
-        'IMG_20250625_170257.jpg', 'IMG_20250625_170300.jpg', 'IMG_20250625_170309.jpg',
-        'IMG_20250625_184612.jpg', 'IMG_20250625_194953.jpg', 'IMG_20250626_141614.jpg'
-      ],
-      '台南': [
-        'IMG_20250627_160837.jpg', 'IMG_20250627_161727.jpg', 'IMG_20250627_180152.jpg',
-        'IMG_20250627_194007.jpg', 'IMG_20250628_094048.jpg', 'IMG_20250628_111544.jpg'
-      ],
-      '成都': ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg', '9.jpg', '10.jpg', '11.jpg', '12.jpg', 'IMG_0814.jpeg', 'IMG_0891.jpeg', 'IMG_0892.jpeg', 'IMG_9578.JPG', 'IMG_9635.JPG', 'IMG_9652.JPG'],
-      '高雄': ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg'],
-      '河源': ['IMG_0796.jpeg', 'IMG_0797.jpeg', 'IMG_0798.jpeg', 'IMG_0799.jpeg', 'IMG_9531.JPG', 'IMG_9535.JPG', 'IMG_9536.JPG'],
-      '桂林': ['IMG_0796.jpeg', 'IMG_0797.jpeg', 'IMG_0798.jpeg', 'IMG_0799.jpeg', 'IMG_9531.JPG', 'IMG_9535.JPG', 'IMG_9536.JPG'],
-      '重庆': ['IMG_0807.jpeg', 'IMG_0808.jpeg'],
-      '阿坝州': ['IMG_0823.jpeg', 'IMG_0824.jpeg', 'IMG_0825.jpeg', 'IMG_0826.jpeg', 'IMG_0830.jpeg', 'IMG_0851.jpeg', 'IMG_0852.jpeg', 'IMG_0870.jpeg', 'IMG_0871.jpeg', 'IMG_0872.jpeg', 'IMG_0959.PNG', 'IMG_0960.jpeg', 'IMG_9557.JPG', 'IMG_9559.JPG', 'IMG_9560.JPG'],
-      '深圳': [
-        'IMG_0029.jpg', 'IMG_0044.jpg', 'IMG_0048.jpg', 'IMG_0103.jpg', 'IMG_0098.jpg',
-        'IMG_0288.jpeg', 'IMG_0302.jpeg', 'IMG_0345.jpeg', 'IMG_0404.jpeg', 'IMG_0416.jpeg',
-        'IMG_0724.jpeg', 'IMG_0750.jpeg', 'IMG_0751.jpeg', 'IMG_0752.jpeg',
-        'IMG_20250621_052601.jpg', 'IMG_20250706_172944.jpg', 'IMG_20250707_235656.jpg',
-        'IMG_8749.JPG', 'IMG_8799.JPG', 'IMG_8823.JPG', 'IMG_9012.JPG', 'IMG_9071.JPG',
-        'IMG_9131.JPG', 'IMG_9166.JPG', 'IMG_9195.JPG', 'IMG_9325.JPG', 'IMG_9488.JPG',
-        'WechatIMG17803.jpg', 'WechatIMG17818.jpg', 'WechatIMG17817.jpg',
-        'WechatIMG741.jpg', 'WechatIMG742.jpg', 'WechatIMG743.jpg', 'WechatIMG744.jpg',
-        'WechatIMG9363.jpg', 'WechatIMG9364.jpg', 'WechatIMG9365.jpg', 'WechatIMG9366.jpg',
-        'WechatIMG9367.jpg', 'WechatIMG9368.jpg', 'WechatIMG9369.jpg', 'WechatIMG9370.jpg'
-      ],
-      '马来西亚': [
-        'IMG_20250106_083836.jpg', 'IMG_20250106_090114.jpg', 'IMG_20250106_205620.jpg',
-        'IMG-20250106-WA0002.jpg', 'IMG-20250108-WA0005.jpg', 'IMG-20250109-WA0006.jpg'
-      ],
-      '外伶仃岛': ['1.jpg', '2.jpg', '3.jpg', '4.jpg'],
-      '南澳岛': ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg'],
-      '香港': [
-        'IMG_20241202_065859.jpg', 'IMG_20250208_080930.jpg', 'IMG_20250214_212028.jpg',
-        'IMG_20250313_145008.jpg', 'IMG_20250503_103617.jpg', 'IMG_20250510_155845.jpg'
-      ],
-      '广元': ['1.jpg', '2.jpg', 'IMG_0809.jpeg', 'IMG_0812.jpeg', 'IMG_20250120_150636.jpg', 'IMG_20250121_133018.jpg', 'IMG_20250121_170202.jpg', 'IMG_20250121_171148.jpg', 'IMG_20250121_193322.jpg', 'IMG_20250122_160030.jpg', 'IMG_9542.JPG'],
-      '绵阳': ['1.jpg', '2.jpg', '3.jpg', '4.jpg', 'wx_camera_1737270310924.jpg'],
-      '惠州': [
-        'WechatIMG17788.jpg', 'WechatIMG17789.jpg', 'WechatIMG17790.jpg',
-        'WechatIMG17791.jpg', 'WechatIMG17792.jpg', 'WechatIMG17793.jpg',
-        'WechatIMG17794.jpg', 'WechatIMG17795.jpg', 'WechatIMG17796.jpg'
-      ],
-      '中山': ['WechatIMG17786.jpg', 'WechatIMG17787.jpg'],
-      '东莞': ['IMG_9327.JPG', 'IMG_9328.JPG', 'WechatIMG17920.jpg']
+      '阿勒泰': [
+        'IMG_20250625_170257.jpg', 'IMG_20250625_170300.jpg'
+      ]
     };
 
     const images = [];
@@ -261,7 +219,7 @@ export default function Home({ goTo, goToCity }) {
               zIndex: 10
             }}
           >
-            {/* 主标题 - 一路向哪？ */}
+            {/* 主标题 - WhereToGo？ */}
             <div style={{ display: 'flex', marginBottom: '20px' }}>
               {title.map((char, index) => (
                 <motion.span
@@ -686,7 +644,7 @@ export default function Home({ goTo, goToCity }) {
           >
             <div style={{ textAlign: 'center', lineHeight: '1.3' }}>
               <div>点击此处</div>
-              <div>开始探索旅程</div>
+              <div>开始探索</div>
             </div>
           </motion.button>
         </motion.div>
