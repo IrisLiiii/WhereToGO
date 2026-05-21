@@ -16,9 +16,12 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email citext unique,
   display_name text,
+  font_family text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.profiles add column if not exists font_family text;
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -37,11 +40,12 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, display_name)
+  insert into public.profiles (id, email, display_name, font_family)
   values (
     new.id,
     new.email,
-    coalesce(new.raw_user_meta_data ->> 'display_name', split_part(coalesce(new.email, ''), '@', 1))
+    coalesce(new.raw_user_meta_data ->> 'display_name', split_part(coalesce(new.email, ''), '@', 1)),
+    null
   )
   on conflict (id) do update
     set email = excluded.email;

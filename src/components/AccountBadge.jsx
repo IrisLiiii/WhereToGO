@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -44,11 +44,16 @@ const FONT_OPTIONS = [
 function applyFontFamily(fontFamily) {
   if (!fontFamily) return;
   document.documentElement.style.setProperty('--app-font', fontFamily);
+}
+
+function persistFontFamily(fontFamily) {
+  if (!fontFamily) return;
+  document.documentElement.style.setProperty('--app-font', fontFamily);
   localStorage.setItem('wheretogo:fontFamily', fontFamily);
 }
 
 export default function AccountBadge({ placement = 'bottom-left' }) {
-  const { user, profile, profileLoading, signOut, updateDisplayName } = useAuth();
+  const { user, profile, profileLoading, signOut, updateProfile } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
@@ -60,6 +65,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const initialFontFamilyRef = useRef(null);
 
   const displayName = useMemo(() => {
     const fromProfile = normalizeName(profile?.display_name);
@@ -91,11 +97,20 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
     return { ...base, bottom: '16px', left: '16px' };
   }, [placement]);
 
+  useEffect(() => {
+    if (!profile?.font_family) return;
+    persistFontFamily(profile.font_family);
+    const match = FONT_OPTIONS.find((o) => o.fontFamily === profile.font_family);
+    setFontKey(match?.key || 'system');
+  }, [profile?.font_family]);
+
   const openProfile = () => {
     setError('');
     setDraftName(profile?.display_name || '');
-    const stored = localStorage.getItem('wheretogo:fontFamily');
+    const stored = profile?.font_family || localStorage.getItem('wheretogo:fontFamily');
     const match = stored ? FONT_OPTIONS.find((o) => o.fontFamily === stored) : null;
+    const initialFontFamily = match?.fontFamily || FONT_OPTIONS[0].fontFamily;
+    initialFontFamilyRef.current = initialFontFamily;
     setFontKey(match?.key || 'system');
     setIsOpen(true);
   };
@@ -104,6 +119,9 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
     if (saving) return;
     setIsOpen(false);
     setError('');
+    if (initialFontFamilyRef.current) {
+      persistFontFamily(initialFontFamilyRef.current);
+    }
   };
 
   const handleSave = async () => {
@@ -115,7 +133,11 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
     }
 
     setSaving(true);
-    const { error: updateError } = await updateDisplayName(next);
+    const selected = FONT_OPTIONS.find((o) => o.key === fontKey) || FONT_OPTIONS[0];
+    const { error: updateError } = await updateProfile({
+      display_name: next,
+      font_family: selected.fontFamily,
+    });
     setSaving(false);
 
     if (updateError) {
@@ -123,8 +145,7 @@ export default function AccountBadge({ placement = 'bottom-left' }) {
       return;
     }
 
-    const selected = FONT_OPTIONS.find((o) => o.key === fontKey);
-    applyFontFamily(selected?.fontFamily || FONT_OPTIONS[0].fontFamily);
+    persistFontFamily(selected.fontFamily);
     setIsOpen(false);
   };
 

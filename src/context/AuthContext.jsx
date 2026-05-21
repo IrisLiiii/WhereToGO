@@ -1,7 +1,13 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
+
+function applyAndCacheFontFamily(fontFamily) {
+  if (!fontFamily) return;
+  document.documentElement.style.setProperty('--app-font', fontFamily);
+  localStorage.setItem('wheretogo:fontFamily', fontFamily);
+}
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -55,7 +61,7 @@ export function AuthProvider({ children }) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, display_name')
+        .select('id, email, display_name, font_family')
         .eq('id', userId)
         .maybeSingle();
 
@@ -69,6 +75,9 @@ export function AuthProvider({ children }) {
       }
 
       setProfile(data ?? null);
+      if (data?.font_family) {
+        applyAndCacheFontFamily(data.font_family);
+      }
       setProfileLoading(false);
     };
 
@@ -94,19 +103,22 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signOut();
         return { error };
       },
-      async updateDisplayName(displayName) {
+      async updateProfile(nextProfile) {
         const userId = session?.user?.id;
         if (!userId) return { error: new Error('Not signed in') };
 
         const { data, error } = await supabase
           .from('profiles')
-          .update({ display_name: displayName })
+          .update(nextProfile)
           .eq('id', userId)
-          .select('id, email, display_name')
+          .select('id, email, display_name, font_family')
           .maybeSingle();
 
         if (!error) {
           setProfile(data ?? null);
+          if (data?.font_family) {
+            applyAndCacheFontFamily(data.font_family);
+          }
         }
 
         return { error };
