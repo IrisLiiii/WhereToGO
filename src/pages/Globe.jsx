@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 
 // 定义城市列表（基于pointsData）
 const cities = [
-  '深圳', '香港', '惠州', '珠海', '中山', '东莞', '外伶仃岛', '南澳岛',
-  '台北', '台南', '高雄', '马来西亚', '成都', '广元', '绵阳'
+  '深圳'
 ];
 
 export default function Globe({ goTo, goToCity }) {

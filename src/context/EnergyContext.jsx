@@ -9,12 +9,12 @@ export const USERS = {
     D: {
         id: 'Dd',
         name: '我',
-        keywords: ['专注', '求索', '真实']
+        keywords: ['运动', '探索']
     },
     T: {
         id: 'Peachfuzzz',
         name: 'TA',
-        keywords: ['思考', '减负', '在场', '投入']
+        keywords: ['']
     }
 };
 

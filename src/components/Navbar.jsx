@@ -3,9 +3,9 @@ import '../style.css'; // Ensure we can style it
 
 const Navbar = ({ activeTab, setTab, isMobile }) => {
     const allTabs = [
-        { id: 'keywords', label: '关键词' },
-        { id: 'towhere', label: 'wheretogo' },
-        { id: 'breaking', label: 'firsts' },
+        { id: 'keywords', label: 'OUR Keywords' },
+        { id: 'towhere', label: 'WhereToGo' },
+        { id: 'breaking', label: 'Firsts' },
     ];
 
     const tabs = isMobile ? allTabs.filter(t => ['towhere', 'breaking'].includes(t.id)) : allTabs;
