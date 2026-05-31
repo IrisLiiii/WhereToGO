@@ -308,22 +308,27 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
                         {showSidebar ? '›' : '‹'}
                     </button>
                     <button
-                        onClick={() => setShowAdmin(true)}
+                        onClick={() => {
+                            if (!enableLegacyAdmin) return;
+                            setShowAdmin(true);
+                        }}
                         style={{
                             background: 'none',
                             border: 'none',
                             color: 'white',
                             fontWeight: 'bold',
                             marginRight: '8px',
-                            cursor: 'pointer',
+                            cursor: enableLegacyAdmin ? 'pointer' : 'not-allowed',
                             userSelect: 'none',
                             fontSize: '0.9rem',
-                            transition: 'opacity 0.2s'
+                            transition: 'opacity 0.2s',
+                            opacity: enableLegacyAdmin ? 1 : 0.5
                         }}
                         onMouseEnter={e => e.currentTarget.style.opacity = 0.7}
-                        onMouseLeave={e => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={e => e.currentTarget.style.opacity = enableLegacyAdmin ? 1 : 0.5}
+                        title={enableLegacyAdmin ? '打开回忆点管理' : '回忆点管理未开启（需要配置 VITE_ENABLE_LEGACY_ADMIN=true）'}
                     >
-                        地点管理
+                        回忆点
                     </button>
                     <button onClick={() => setShowInfoModal(true)}
                         style={{
@@ -397,53 +402,37 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
                         <div onClick={(e) => e.stopPropagation()}
                             style={{
                                 display: 'flex',
-                                gap: '24px',
-                                maxWidth: '1100px',
-                                width: '100%',
-                                maxHeight: '70vh',
+                                maxWidth: '1200px',
+                                width: 'min(1200px, 96vw)',
+                                height: 'min(78vh, 860px)',
                                 cursor: 'default',
                                 alignItems: 'stretch'
                             }}>
-                            <div style={{
-                                flex: 1,
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                boxShadow: '0 0 30px rgba(0,0,0,0.5)',
-                                background: 'rgba(255,255,255,0.03)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <div
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        padding: '18px',
-                                        boxSizing: 'border-box',
-                                        color: 'rgba(255,255,255,0.75)',
-                                        textAlign: 'center',
-                                        lineHeight: 1.8
-                                    }}
-                                >
-                                    开发日志 · 仅文字记录
-                                </div>
-                            </div>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingLeft: '10px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'rgba(255,255,255,0.92)' }}>
+                                        开发日志...
+                                    </div>
                                     <span style={{ fontSize: '0.75rem', color: logSaving ? '#ffd700' : logSaved ? '#4caf50' : 'transparent' }}>
                                         {logSaving ? '保存中...' : logSaved ? '✓ 已保存' : '.'}
                                     </span>
                                 </div>
                                 <textarea value={logContent} onChange={(e) => handleLogChange(e.target.value)}
                                     style={{
-                                        flex: 1, width: '100%', background: 'transparent',
-                                        border: 'none', borderRadius: '0',
-                                        color: 'rgba(255,255,255,0.9)', padding: '0', fontSize: '1.05rem',
-                                        lineHeight: '2.2', resize: 'none', outline: 'none',
-                                        fontFamily: 'inherit', boxSizing: 'border-box'
+                                        flex: 1,
+                                        width: '100%',
+                                        background: 'rgba(255,255,255,0.03)',
+                                        border: '1px solid rgba(255,255,255,0.14)',
+                                        borderRadius: '14px',
+                                        color: 'rgba(255,255,255,0.9)',
+                                        padding: '18px 18px 22px',
+                                        fontSize: '1.05rem',
+                                        lineHeight: '2.2',
+                                        resize: 'none',
+                                        outline: 'none',
+                                        fontFamily: 'inherit',
+                                        boxSizing: 'border-box',
+                                        overflowY: 'auto'
                                     }}
                                     placeholder="在这里记录网站开发日志..." />
                             </div>
