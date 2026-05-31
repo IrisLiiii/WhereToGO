@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import imageCompression from 'browser-image-compression';
-import { uploadFileToGitHub, listFilesInDir, deleteFileFromGitHub, getJsDelivrUrl } from '../../lib/githubApi';
 import { supabase } from '../../lib/supabaseClient';
+import { createSignedUrl, deleteFromSupabase, uploadToSupabase } from '../../lib/supabaseStorage';
 
 export default function CityUploadPanel({ onBack, onCityCreated }) {
     const [cityName, setCityName] = useState('');
@@ -24,17 +24,36 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
     const fileInputRef = useRef(null);
     const dragItem = useRef();
     const dragOverItem = useRef();
+    const originalImageRecordsRef = useRef([]);
+
+    const resolveImageUrl = useCallback(async (path, bucket, fallbackUrl = '') => {
+        if (path) {
+            try {
+                const signedUrl = await createSignedUrl(path, bucket || 'cities-images');
+                if (signedUrl) return signedUrl;
+            } catch (error) {
+                console.error('Failed to create signed URL:', error);
+            }
+        }
+        return fallbackUrl || '';
+    }, []);
 
     // ========= Fetch Locations =========
     const fetchCities = useCallback(async () => {
         setLoadingList(true);
         const { data, error } = await supabase
             .from('cities')
-            .select('*')
+            .select('id, name, description, main_image, main_image_path, main_image_bucket, sort_order, lng, lat, departure')
             .order('sort_order', { ascending: true });
-        if (!error && data) setCityList(data);
+        if (!error && data) {
+            const citiesWithImage = await Promise.all(data.map(async (city) => ({
+                ...city,
+                displayMainImage: await resolveImageUrl(city.main_image_path, city.main_image_bucket, city.main_image)
+            })));
+            setCityList(citiesWithImage);
+        }
         setLoadingList(false);
-    }, []);
+    }, [resolveImageUrl]);
 
     useEffect(() => {
         fetchCities();
@@ -116,17 +135,22 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
 
         const { data: imgData } = await supabase
             .from('city_images')
-            .select('*')
+            .select('id, url, storage_path, storage_bucket, caption, sort_order')
             .eq('city_id', city.id)
             .order('sort_order', { ascending: true });
 
+        originalImageRecordsRef.current = imgData || [];
         if (imgData) {
-            setImages(imgData.map(img => ({
+            const previewImages = await Promise.all(imgData.map(async (img) => ({
                 id: img.id,
-                preview: img.url,
-                cdnUrl: img.url,
+                preview: await resolveImageUrl(img.storage_path, img.storage_bucket, img.url),
+                storagePath: img.storage_path,
+                storageBucket: img.storage_bucket || 'cities-images',
+                cdnUrl: img.url || null,
+                caption: img.caption || '',
                 status: 'done'
             })));
+            setImages(previewImages);
         }
     };
 
@@ -138,6 +162,7 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
         setLng('');
         setLat('');
         setImages([]);
+        originalImageRecordsRef.current = [];
         setSubmitResult({ status: '', message: '' });
     };
 
@@ -149,81 +174,112 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
 
         try {
             setUploadProgress(10);
-            const folderPath = `public/images/cities/${cityName.trim()}`;
-
-            // 1. Audit GitHub directory
-            const auditRes = await listFilesInDir(folderPath);
-            const existingFilesOnGitHub = auditRes.success ? auditRes.files : [];
-
-            const finalUrls = [];
-
-            // 2. Process images
-            for (let i = 0; i < images.length; i++) {
-                const img = images[i];
-                setUploadProgress(Math.floor(10 + (i / images.length) * 70));
-
-                if (img.status === 'done' && img.cdnUrl) {
-                    finalUrls.push(img.cdnUrl);
-                    continue;
-                }
-
-                const compressed = await imageCompression(img.file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
-                const base64 = await new Promise(r => {
-                    const reader = new FileReader();
-                    reader.onload = () => r(reader.result.split(',')[1]);
-                    reader.readAsDataURL(compressed);
-                });
-
-                const fileName = `${Date.now()}_${i}_${img.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-                const path = `${folderPath}/${fileName}`;
-
-                const res = await uploadFileToGitHub(path, base64, `Upload: ${cityName}/${fileName}`);
-                if (res.success) {
-                    finalUrls.push(res.url);
-                }
-            }
-
-            // 3. Update Supabase
-            const mainImage = finalUrls[0] || '';
-            const cityPayload = {
+            let currentCityId = editingCityId;
+            const finalImageRecords = [];
+            const baseCityPayload = {
                 name: cityName.trim(),
                 description: visitDate.trim() || null,
-                main_image: mainImage,
                 lng: parseFloat(lng),
                 lat: parseFloat(lat),
                 departure: departure.trim() || null,
             };
 
-            let currentCityId = editingCityId;
+            if (!currentCityId) {
+                const { data: maxOrder } = await supabase
+                    .from('cities')
+                    .select('sort_order')
+                    .order('sort_order', { ascending: false })
+                    .limit(1);
+                const { data, error } = await supabase
+                    .from('cities')
+                    .insert({
+                        ...baseCityPayload,
+                        sort_order: (maxOrder?.[0]?.sort_order || 0) + 1
+                    })
+                    .select()
+                    .single();
+                if (error) throw error;
+                currentCityId = data.id;
+            }
+
+            const folderPath = `cities/${currentCityId}`;
+
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                setUploadProgress(Math.floor(10 + (i / images.length) * 70));
+
+                if (img.status === 'done' && (img.storagePath || img.cdnUrl)) {
+                    finalImageRecords.push({
+                        url: img.cdnUrl || null,
+                        storage_path: img.storagePath || null,
+                        storage_bucket: img.storageBucket || 'cities-images',
+                        caption: img.caption || null
+                    });
+                    continue;
+                }
+
+                const compressed = await imageCompression(img.file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
+                const { path } = await uploadToSupabase(compressed, 'cities-images', {
+                    folder: folderPath,
+                    returnPublicUrl: false
+                });
+                finalImageRecords.push({
+                    url: null,
+                    storage_path: path,
+                    storage_bucket: 'cities-images',
+                    caption: img.caption || null
+                });
+            }
+
+            const firstImage = finalImageRecords[0] || null;
+            const cityPayload = {
+                ...baseCityPayload,
+                main_image: firstImage?.url || null,
+                main_image_path: firstImage?.storage_path || null,
+                main_image_bucket: firstImage?.storage_bucket || 'cities-images',
+            };
+
             if (editingCityId) {
                 const { error } = await supabase.from('cities').update(cityPayload).eq('id', editingCityId);
                 if (error) throw error;
                 await supabase.from('city_images').delete().eq('city_id', editingCityId);
             } else {
-                const { data: maxOrder } = await supabase.from('cities').select('sort_order').order('sort_order', { ascending: false }).limit(1);
-                cityPayload.sort_order = (maxOrder?.[0]?.sort_order || 0) + 1;
-                const { data, error } = await supabase.from('cities').insert(cityPayload).select().single();
+                const { error } = await supabase
+                    .from('cities')
+                    .update(cityPayload)
+                    .eq('id', currentCityId);
                 if (error) throw error;
-                currentCityId = data.id;
             }
 
-            if (finalUrls.length > 0) {
-                const imgRecords = finalUrls.map((url, idx) => ({ city_id: currentCityId, url, sort_order: idx }));
+            if (finalImageRecords.length > 0) {
+                const imgRecords = finalImageRecords.map((img, idx) => ({
+                    city_id: currentCityId,
+                    url: img.url,
+                    storage_path: img.storage_path,
+                    storage_bucket: img.storage_bucket || 'cities-images',
+                    caption: img.caption || null,
+                    sort_order: idx
+                }));
                 await supabase.from('city_images').insert(imgRecords);
             }
 
-            // 4. Cleanup Orphans on GitHub
-            for (const file of existingFilesOnGitHub) {
-                // Use filename-based check instead of full URL to avoid encoding/format issues
-                const isStillNeeded = finalUrls.some(url => url.includes(encodeURIComponent(file.name)));
+            if (editingCityId) {
+                const retainedPaths = new Set(finalImageRecords.map(img => img.storage_path).filter(Boolean));
+                const removedRecords = originalImageRecordsRef.current.filter(img => img.storage_path && !retainedPaths.has(img.storage_path));
+                const bucketGroups = removedRecords.reduce((groups, img) => {
+                    const bucket = img.storage_bucket || 'cities-images';
+                    groups[bucket] = groups[bucket] || [];
+                    groups[bucket].push(img.storage_path);
+                    return groups;
+                }, {});
 
-                if (!isStillNeeded) {
-                    await deleteFileFromGitHub(file.path, file.sha, `Cleanup: Remove old image for ${cityName}`);
+                for (const [bucket, paths] of Object.entries(bucketGroups)) {
+                    await deleteFromSupabase(paths, bucket);
                 }
             }
 
             setUploadProgress(100);
-            setSubmitResult({ status: 'success', message: editingCityId ? '更新成功' : '创建成功' });
+            setSubmitResult({ status: 'success', message: editingCityId ? '旅行脚步已更新' : '旅行脚步已创建' });
 
             // Auto-hide success message after 2s
             setTimeout(() => {
@@ -243,21 +299,25 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
 
     const handleDeleteCity = async () => {
         if (!editingCityId) return;
-        if (!window.confirm(`确定要删除地点「${cityName}」吗？（这也会清除 GitHub 上的照片）`)) return;
+        if (!window.confirm(`确定要删除旅行脚步「${cityName}」吗？这也会清除它在 Supabase Storage 里的照片。`)) return;
         setIsSubmitting(true);
 
         try {
-            const folderPath = `public/images/cities/${cityName.trim()}`;
-            const auditRes = await listFilesInDir(folderPath);
-            if (auditRes.success) {
-                for (const file of auditRes.files) {
-                    await deleteFileFromGitHub(file.path, file.sha, `Cleanup: Delete city ${cityName}`);
-                }
+            const imageRecords = originalImageRecordsRef.current;
+            const bucketGroups = imageRecords.reduce((groups, img) => {
+                if (!img.storage_path) return groups;
+                const bucket = img.storage_bucket || 'cities-images';
+                groups[bucket] = groups[bucket] || [];
+                groups[bucket].push(img.storage_path);
+                return groups;
+            }, {});
+            for (const [bucket, paths] of Object.entries(bucketGroups)) {
+                await deleteFromSupabase(paths, bucket);
             }
 
             const { error } = await supabase.from('cities').delete().eq('id', editingCityId);
             if (!error) {
-                setSubmitResult({ status: 'success', message: '地点及其照片已彻底删除' });
+                setSubmitResult({ status: 'success', message: '旅行脚步及其照片已彻底删除' });
                 resetForm();
                 fetchCities();
                 if (onCityCreated) onCityCreated();
@@ -294,10 +354,10 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
                             <path d="M19 12H5M12 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <h1 style={titleStyle}>{editingCityId ? '✏️ 编辑地点' : '✨ 新地点'}</h1>
+                    <h1 style={titleStyle}>{editingCityId ? '✏️ 编辑旅行脚步' : '✨ 新旅行脚步'}</h1>
                 </div>
                 {editingCityId && (
-                    <button onClick={handleDeleteCity} style={dangerHeaderButtonStyle}>🗑️ 删除整个地点</button>
+                    <button onClick={handleDeleteCity} style={dangerHeaderButtonStyle}>🗑️ 删除这段旅行脚步</button>
                 )}
             </div>
 
@@ -342,7 +402,7 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
 
                     <div style={galleryCardStyle}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h3 style={{ ...sectionTitleStyle, marginBottom: 0 }}>地点图库</h3>
+                        <h3 style={{ ...sectionTitleStyle, marginBottom: 0 }}>旅行相册</h3>
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <input
                                     type="file"
@@ -446,7 +506,7 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
 
                 {/* Right Section: Location Library */}
                 <div style={rightColumnStyle}>
-                    <h3 style={{ ...sectionTitleStyle, padding: '0 10px 15px' }}>地点清单 ({cityList.length})</h3>
+                    <h3 style={{ ...sectionTitleStyle, padding: '0 10px 15px' }}>旅行脚步 ({cityList.length})</h3>
                     <div style={listScrollAreaStyle}>
                         {loadingList ? (
                             <div style={loaderCenterStyle}>加载中...</div>
@@ -461,7 +521,7 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
                                     background: editingCityId === city.id ? 'rgba(102,126,234,0.15)' : 'rgba(255,255,255,0.03)'
                                 }}
                             >
-                                <img src={city.main_image} style={listImgStyle} alt="" />
+                                <img src={city.displayMainImage || city.main_image || ''} style={listImgStyle} alt="" />
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontWeight: 600 }}>{city.name}</div>
                                     <div style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '2px' }}>{city.description || '待定日期'}</div>

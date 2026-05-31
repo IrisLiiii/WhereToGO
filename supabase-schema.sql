@@ -108,19 +108,39 @@ create table if not exists public.cities (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+alter table public.cities add column if not exists main_image_path text;
+alter table public.cities add column if not exists main_image_bucket text default 'cities-images';
+
 create table if not exists public.city_images (
   id uuid primary key default gen_random_uuid(),
   city_id uuid not null references public.cities(id) on delete cascade,
   owner_user_id uuid references public.profiles(id) on delete set null default auth.uid(),
   url text not null,
+  storage_path text,
+  storage_bucket text default 'cities-images',
   caption text,
   sort_order integer not null default 0,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+alter table public.city_images add column if not exists storage_path text;
+alter table public.city_images add column if not exists storage_bucket text default 'cities-images';
+alter table public.city_images alter column url drop not null;
+
+create table if not exists public.city_comments (
+  id uuid primary key default gen_random_uuid(),
+  city_id uuid not null references public.cities(id) on delete cascade,
+  owner_user_id uuid references public.profiles(id) on delete set null default auth.uid(),
+  author_name text not null,
+  content text not null,
   created_at timestamptz not null default timezone('utc', now())
 );
 
 create index if not exists idx_cities_sort_order on public.cities(sort_order);
 create index if not exists idx_city_images_city_id on public.city_images(city_id);
 create index if not exists idx_city_images_sort_order on public.city_images(sort_order);
+create index if not exists idx_city_comments_city_id on public.city_comments(city_id);
+create index if not exists idx_city_comments_created_at on public.city_comments(created_at desc);
 
 drop trigger if exists set_cities_updated_at on public.cities;
 create trigger set_cities_updated_at
@@ -218,6 +238,7 @@ for each row execute procedure public.set_updated_at();
 alter table public.profiles enable row level security;
 alter table public.cities enable row level security;
 alter table public.city_images enable row level security;
+alter table public.city_comments enable row level security;
 alter table public.firsts enable row level security;
 alter table public.letters enable row level security;
 alter table public.checkins enable row level security;
@@ -247,6 +268,13 @@ with check (public.is_shared_member());
 drop policy if exists "shared_members_all_city_images" on public.city_images;
 create policy "shared_members_all_city_images"
 on public.city_images
+for all
+using (public.is_shared_member())
+with check (public.is_shared_member());
+
+drop policy if exists "shared_members_all_city_comments" on public.city_comments;
+create policy "shared_members_all_city_comments"
+on public.city_comments
 for all
 using (public.is_shared_member())
 with check (public.is_shared_member());
@@ -288,8 +316,8 @@ with check (public.is_shared_member());
 
 -- ============================================
 -- Storage
--- 当前版本为了兼容现有前端，先保留 public bucket 思路
--- 后续如果要更强隐私，再改成 private bucket + signed URL
+-- 城市照片改为 private bucket + signed URL
+-- 这样只有已登录共享成员才能读取
 -- ============================================
 
 insert into storage.buckets (id, name, public)
@@ -300,12 +328,20 @@ insert into storage.buckets (id, name, public)
 values ('memory-media', 'memory-media', true)
 on conflict (id) do nothing;
 
+insert into storage.buckets (id, name, public)
+values ('cities-images', 'cities-images', false)
+on conflict (id) do nothing;
+
+update storage.buckets
+set public = false
+where id = 'cities-images';
+
 drop policy if exists "shared_members_read_storage" on storage.objects;
 create policy "shared_members_read_storage"
 on storage.objects
 for select
 using (
-  bucket_id in ('firsts-images', 'memory-media')
+  bucket_id in ('firsts-images', 'memory-media', 'cities-images')
   and public.is_shared_member()
 );
 
@@ -314,7 +350,7 @@ create policy "shared_members_insert_storage"
 on storage.objects
 for insert
 with check (
-  bucket_id in ('firsts-images', 'memory-media')
+  bucket_id in ('firsts-images', 'memory-media', 'cities-images')
   and public.is_shared_member()
 );
 
@@ -323,11 +359,11 @@ create policy "shared_members_update_storage"
 on storage.objects
 for update
 using (
-  bucket_id in ('firsts-images', 'memory-media')
+  bucket_id in ('firsts-images', 'memory-media', 'cities-images')
   and public.is_shared_member()
 )
 with check (
-  bucket_id in ('firsts-images', 'memory-media')
+  bucket_id in ('firsts-images', 'memory-media', 'cities-images')
   and public.is_shared_member()
 );
 
@@ -336,6 +372,6 @@ create policy "shared_members_delete_storage"
 on storage.objects
 for delete
 using (
-  bucket_id in ('firsts-images', 'memory-media')
+  bucket_id in ('firsts-images', 'memory-media', 'cities-images')
   and public.is_shared_member()
 );

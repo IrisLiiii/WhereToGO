@@ -2,9 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CesiumGlobe from './CesiumGlobe';
 import { supabase } from '../lib/supabaseClient';
-import AdminTokenManager from './admin/AdminTokenManager';
-
-const enableLegacyAdmin = import.meta.env.VITE_ENABLE_LEGACY_ADMIN === 'true';
+import CityUploadPanel from './admin/CityUploadPanel';
 
 // Carousel sequence: 0(15s) -> 1(15s) -> 2(40s) -> 1(15s) -> 0(15s) -> repeat
 const CAROUSEL_SEQUENCE = [
@@ -37,26 +35,6 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
 
     // ========= Admin Easter Egg =========
     const [showAdmin, setShowAdmin] = useState(false);
-    const easterEggClickCount = useRef(0);
-    const easterEggTimer = useRef(null);
-
-    const handleTitleClick = useCallback(() => {
-        if (!enableLegacyAdmin) return;
-        easterEggClickCount.current += 1;
-        console.log(`Title clicked ${easterEggClickCount.current}/5`);
-        if (easterEggTimer.current) clearTimeout(easterEggTimer.current);
-        if (easterEggClickCount.current >= 5) {
-            console.log('Admin triggered!');
-            easterEggClickCount.current = 0;
-            setShowAdmin(true);
-        } else {
-            easterEggTimer.current = setTimeout(() => {
-                console.log('Admin click count reset');
-                easterEggClickCount.current = 0;
-            }, 3000); // 3s
-        }
-    }, []);
-
     const refreshCities = useCallback(async () => {
         try {
             const { data, error } = await supabase
@@ -308,27 +286,24 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
                         {showSidebar ? '›' : '‹'}
                     </button>
                     <button
-                        onClick={() => {
-                            if (!enableLegacyAdmin) return;
-                            setShowAdmin(true);
-                        }}
+                        onClick={() => setShowAdmin(true)}
                         style={{
                             background: 'none',
                             border: 'none',
                             color: 'white',
                             fontWeight: 'bold',
                             marginRight: '8px',
-                            cursor: enableLegacyAdmin ? 'pointer' : 'not-allowed',
+                            cursor: 'pointer',
                             userSelect: 'none',
                             fontSize: '0.9rem',
                             transition: 'opacity 0.2s',
-                            opacity: enableLegacyAdmin ? 1 : 0.5
+                            opacity: 1
                         }}
                         onMouseEnter={e => e.currentTarget.style.opacity = 0.7}
-                        onMouseLeave={e => e.currentTarget.style.opacity = enableLegacyAdmin ? 1 : 0.5}
-                        title={enableLegacyAdmin ? '打开回忆点管理' : '回忆点管理未开启（需要配置 VITE_ENABLE_LEGACY_ADMIN=true）'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = 1}
+                        title="打开旅行脚步管理"
                     >
-                        回忆点
+                        旅行脚步
                     </button>
                     <button onClick={() => setShowInfoModal(true)}
                         style={{
@@ -441,11 +416,9 @@ export default function PinkAnimationHome({ goTo, goToCity, isCityMode = false, 
                 )}
             </AnimatePresence>
 
-            {/* Admin Panel (Easter Egg) */}
-            {enableLegacyAdmin && (
-                <AdminTokenManager
-                    isOpen={showAdmin}
-                    onClose={() => setShowAdmin(false)}
+            {showAdmin && (
+                <CityUploadPanel
+                    onBack={() => setShowAdmin(false)}
                     onCityCreated={refreshCities}
                 />
             )}
