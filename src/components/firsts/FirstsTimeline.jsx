@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
 import { uploadToSupabase } from '../../lib/supabaseStorage';
@@ -18,7 +18,7 @@ const EMOJI_MAP = {
     'hiphop': '🎤', '唱': '🎤', '音乐': '🎵', '黑怕': '🎧', '听歌': '🎧',
     '摩天轮': '🎡', '乐园': '🎡',
     '花': '💐', '玫瑰': '🌹',
-    '表白': '🥰', '喜欢': '🥰', '亲亲': '😽','亲': '😗','亲亲亲': '😘', '亲亲亲亲亲': '👩‍❤️‍💋‍👨', '亲亲亲亲': '😚', 
+    'begin': '🥰', '表白': '🥰', '喜欢': '🥰', '亲亲': '😽','亲': '😗','亲亲亲': '😘', '亲亲亲亲亲': '👩‍❤️‍💋‍👨', '亲亲亲亲': '😚', 
     '日出': '🌅', '日落': '🌇', '早': '🌞', '晚': '🌙', '夜景': '🌃',
     '飞机': '✈️', '机场': '✈️', '飞行': '✈️',
     '家': '🏠', '住': '🏠', '寓': '🏠',
@@ -693,7 +693,7 @@ export default function FirstsTimeline() {
                         {/* Left Column: Filters */}
                         <div className="firsts-sidebar">
                             <div className="sidebar-section">
-                                <h3>时光漫游</h3>
+                                <h3>old days</h3>
                                 <div className="filter-list">
                                     {availableYears.map(year => (
                                         <button

@@ -13,18 +13,32 @@ export default function GravityChart() {
 
     // 1. Get all dates from the first keyword (assuming all have same dates)
     const firstKw = userInfo.keywords[0];
-    const history = gravityScores[firstKw] || [];
+    const history = gravityScores[userInfo.id]?.[firstKw] || [];
 
     const chartData = history.map((h, index) => {
         const row = { date: h.date };
         userInfo.keywords.forEach(kw => {
-            const kwHistory = gravityScores[kw];
+            const kwHistory = gravityScores[userInfo.id]?.[kw];
             if (kwHistory && kwHistory[index]) {
                 row[kw] = kwHistory[index].score;
             }
         });
         return row;
     });
+
+    if (!firstKw) {
+        return (
+            <div style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#8892b0'
+            }}>
+                先添加年度关键词，轨迹图才会出现。
+            </div>
+        );
+    }
 
     return (
         <ResponsiveContainer width="100%" height="100%">

@@ -218,6 +218,26 @@ create table if not exists public.keyword_tasks (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.user_keywords (
+  id uuid primary key default gen_random_uuid(),
+  owner_user_id uuid references public.profiles(id) on delete set null default auth.uid(),
+  user_id text not null,
+  keyword text not null,
+  year integer not null default extract(year from timezone('utc', now()))::integer,
+  status text not null default 'active' check (status in ('active', 'archived')),
+  sort_order integer not null default 0,
+  archived_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  unique(user_id, year, keyword, status)
+);
+
+create index if not exists idx_user_keywords_user_year_status
+on public.user_keywords(user_id, year, status, sort_order);
+
+create index if not exists idx_user_keywords_archived_at
+on public.user_keywords(archived_at desc);
+
 create table if not exists public.app_config (
   key text primary key,
   value jsonb not null,
@@ -227,6 +247,11 @@ create table if not exists public.app_config (
 drop trigger if exists set_app_config_updated_at on public.app_config;
 create trigger set_app_config_updated_at
 before update on public.app_config
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists set_user_keywords_updated_at on public.user_keywords;
+create trigger set_user_keywords_updated_at
+before update on public.user_keywords
 for each row execute procedure public.set_updated_at();
 
 -- ============================================
@@ -243,6 +268,7 @@ alter table public.firsts enable row level security;
 alter table public.letters enable row level security;
 alter table public.checkins enable row level security;
 alter table public.keyword_tasks enable row level security;
+alter table public.user_keywords enable row level security;
 alter table public.app_config enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -303,6 +329,13 @@ with check (public.is_shared_member());
 drop policy if exists "shared_members_all_keyword_tasks" on public.keyword_tasks;
 create policy "shared_members_all_keyword_tasks"
 on public.keyword_tasks
+for all
+using (public.is_shared_member())
+with check (public.is_shared_member());
+
+drop policy if exists "shared_members_all_user_keywords" on public.user_keywords;
+create policy "shared_members_all_user_keywords"
+on public.user_keywords
 for all
 using (public.is_shared_member())
 with check (public.is_shared_member());

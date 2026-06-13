@@ -11,21 +11,10 @@ export default function StarshipWidget() {
     if (!starshipState) return null;
 
     // Destructure detailed stats
-    const { progress, keywordStats } = starshipState;
+    const { progress, keywordStatsList = [] } = starshipState;
 
     // Calculate Unexplored Area
     const unexplored = Math.max(0, 100 - progress);
-
-    // Define Planet display order and naming
-    const PLANET_ORDER = [
-        { key: '求索', name: '求索星' },
-        { key: '真实', name: '真实星' },
-        { key: '专注', name: '专注星' },
-        { key: '减负', name: '减负星' },
-        { key: '思考', name: '思考星' },
-        { key: '在场', name: '在场星' },
-        { key: '投入', name: '投入星' }
-    ];
 
     return (
         <div
@@ -93,11 +82,14 @@ export default function StarshipWidget() {
                             <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '5px 0' }} />
 
                             {/* Individual Planets */}
-                            {PLANET_ORDER.map(p => {
-                                const val = keywordStats[p.key] || 0;
+                            {keywordStatsList.length === 0 && (
+                                <div style={{ color: '#888' }}>还没有可追踪的年度关键词</div>
+                            )}
+                            {keywordStatsList.map((planet) => {
+                                const val = planet.progress || 0;
                                 return (
-                                    <div key={p.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: '#A0AEC0' }}>{p.name}</span>
+                                    <div key={`${planet.userId}-${planet.keyword}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: '#A0AEC0' }}>{planet.userName} · {planet.keyword}</span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '60px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }}>
                                                 <div style={{ width: `${Math.min(100, val)}%`, height: '100%', background: val >= 100 ? '#6BCB77' : '#4ECDC4', borderRadius: '2px' }} />

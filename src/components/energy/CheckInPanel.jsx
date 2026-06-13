@@ -93,6 +93,18 @@ export default function CheckInPanel() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                {userInfo.keywords.length === 0 && (
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        padding: '28px',
+                        borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: '#8892b0',
+                        textAlign: 'center'
+                    }}>
+                        这个人今年还没有年度关键词，先在上方“年度关键词管理”里加几个吧。
+                    </div>
+                )}
                 {userInfo.keywords.map(kw => (
                     <div key={kw} style={{
                         background: 'rgba(0,0,0,0.3)',

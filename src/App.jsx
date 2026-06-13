@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Story from './pages/Story';
 import End from './pages/End';
 import CityDetail from './pages/CityDetail';
@@ -168,7 +168,7 @@ function AuthenticatedApp() {
   const [page, setPage] = useState('home');
   const [selectedCity, setSelectedCity] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [activeTab, setActiveTab] = useState(window.innerWidth < 768 ? 'towhere' : 'keywords');
+  const [activeTab, setActiveTab] = useState('towhere');
   const [showMobileNotice, setShowMobileNotice] = useState(window.innerWidth < 768);
 
   useEffect(() => {

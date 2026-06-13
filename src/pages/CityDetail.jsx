@@ -394,7 +394,7 @@ export default function CityDetail({ cityName, goBack }) {
       {/* 图片流区域 */}
       <div className="gallery-section">
         <div className="gallery-container">
-          <h2 className="gallery-title">精彩瞬间</h2>
+          <h2 className="gallery-title">memories</h2>
           {(currentCity.description || currentCity.departure || currentCity.lng || currentCity.lat) && (
             <div className="city-overview-card">
               {currentCity.description && (
@@ -433,7 +433,7 @@ export default function CityDetail({ cityName, goBack }) {
                   >
                     <img
                       src={image}
-                      alt={`${cityName} 精彩记录 ${index + 1}`}
+                      alt={`${cityName} memories ${index + 1}`}
                       onError={handleImageError}
                     />
                   </motion.div>
@@ -441,7 +441,7 @@ export default function CityDetail({ cityName, goBack }) {
               })
             ) : (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', color: '#999', fontSize: '1.1rem', letterSpacing: '1px' }}>
-                照片都被藏起来了哦，自己去上传试试吧～
+                上传试试吧
               </div>
             )}
           </div>

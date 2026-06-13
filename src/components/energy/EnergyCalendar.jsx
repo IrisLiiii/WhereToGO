@@ -168,6 +168,18 @@ export default function EnergyCalendar() {
                 </div>
             </div>
 
+            {userInfo.keywords.length === 0 && (
+                <div style={{
+                    padding: '28px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.03)',
+                    color: '#8892b0',
+                    textAlign: 'center'
+                }}>
+                    当前没有可展示的年度关键词日历。
+                </div>
+            )}
+
             {/* Keywords Loop */}
             {userInfo.keywords.map(kw => (
                 <div key={kw} style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px' }}>

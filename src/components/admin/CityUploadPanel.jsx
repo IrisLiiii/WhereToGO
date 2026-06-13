@@ -374,7 +374,7 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
                                         value={cityName}
                                         onChange={e => setCityName(e.target.value)}
                                         style={inputStyle}
-                                        placeholder="例如: 杭州"
+                                        placeholder="例如: 丽水"
                                     />
                                     {geocoding && <div style={loaderSmallStyle} />}
                                 </div>
@@ -395,7 +395,7 @@ export default function CityUploadPanel({ onBack, onCityCreated }) {
                             </div>
                             <div style={{ flex: 1 }}>
                                 <label style={labelStyle}>出发地</label>
-                                <input value={departure} onChange={e => setDeparture(e.target.value)} style={inputStyle} placeholder="深圳" />
+                                <input value={departure} onChange={e => setDeparture(e.target.value)} style={inputStyle} placeholder="北京" />
                             </div>
                         </div>
                     </div>
